@@ -1,0 +1,20 @@
+[Node]
+name=node1
+tokens=1
+[Node]
+name=node2
+tokens=0
+
+[Transition]
+name=tra1
+
+[Transition]
+name=tra2
+
+[NodeToTransition]
+connection = node1, tra1
+connection = node2, tra2
+
+[TransitionToNode]
+connection = tra1, node2
+connection = tra2, node1
