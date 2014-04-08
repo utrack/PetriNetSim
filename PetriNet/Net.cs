@@ -14,7 +14,11 @@ namespace PetriNet
 
         private readonly Dictionary<string, Node> _nodes = new Dictionary<string, Node>();
         private readonly Dictionary<string, Transition> _transitions = new Dictionary<string, Transition>(); 
-        private readonly Dictionary<string, int> _defMarking = new Dictionary<string, int>(); 
+
+
+        private readonly Dictionary<string, int> _defMarking = new Dictionary<string, int>();
+        private readonly Dictionary<string, int> _maxMarks = new Dictionary<string, int>(); 
+        private Tree.Node _startNode;
         private readonly List<Dictionary<string, int>> _foundMarkings = new List<Dictionary<string, int>>();
         public Net(string file)
         {
@@ -26,6 +30,7 @@ namespace PetriNet
                 var name = set.GetFirstOf("name")[0];
                 var newNode = new Node(name);
                 _defMarking[name] = int.Parse(set.GetFirstOf("tokens")[0]);
+                _maxMarks[name] = _defMarking[name];
                 _nodes.Add(name,newNode);
             }
 
@@ -54,28 +59,42 @@ namespace PetriNet
 
         public void Traverse()
         {
-            Traverse(new Dictionary<string, int>(_defMarking),_defMarking);
+            _startNode = new Tree.Node(_defMarking, "Root");
+            Traverse(new Dictionary<string, int>(_defMarking),_startNode);
         }
 
-        private void Traverse(Dictionary<string, int> marking, Dictionary<string, int> pMarking)
+        private void Traverse(Dictionary<string, int> marking, Tree.Node tNode)
         {
+
             if (MarkFound != null)
-                MarkFound(marking,pMarking);
+                MarkFound(marking, tNode.Marking);
 
             if (StateExists(marking)) return;
             _foundMarkings.Add(marking);
 
             foreach (var newMarking in from trans in _transitions.Values 
                                        where trans.ReadyForTransition(marking) 
-                                       select trans.Transit(marking))
+                                       select new { Mark = trans.Transit(marking), netNode = trans})
             {
-                Traverse(newMarking,marking);
+                SetMaxMarks(newMarking.Mark);
+                var node = new Tree.Node(newMarking.Mark, newMarking.netNode.Name);
+                tNode.Children.Add(node);
+                
+                Traverse(newMarking.Mark,node);
             }
         }
 
         public bool StateExists(Dictionary<string, int> state)
         {
             return _foundMarkings.Any(dict => MarkingDict.Compare(dict, state));
+        }
+
+        private void SetMaxMarks(Dictionary<string, int> marking)
+        {
+            foreach (var val in marking.Where(val => val.Value > _maxMarks[val.Key]))
+            {
+                _maxMarks[val.Key] = val.Value;
+            }
         }
     }
 }

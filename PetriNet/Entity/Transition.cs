@@ -17,10 +17,15 @@ namespace PetriNet.Entity
         {
             Name = name;
         }
-
+        //.Select(y => new { Element = y.Key, Counter = g.Count() })
+              //.ToList();
         public bool ReadyForTransition(Dictionary<string, int> marking)
         {
-            return Inputs.All(inp => inp.HasToken(marking));
+            var query = Inputs.GroupBy(x => x)
+              .Where(g => g.Any())
+              .ToDictionary(x => x.Key, y => y.Count());
+
+            return query.All(inp => inp.Key.HasToken(marking, inp.Value));
         }
 
         public Dictionary<string, int> Transit(Dictionary<string, int> marking)

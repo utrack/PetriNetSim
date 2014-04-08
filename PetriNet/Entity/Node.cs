@@ -7,6 +7,7 @@ namespace PetriNet.Entity
 
         private readonly List<Transition> _inputs = new List<Transition>();
         private readonly List<Transition> _outputs = new List<Transition>();
+        
         public string Name { get; set; }
 
         public Node()
@@ -22,6 +23,11 @@ namespace PetriNet.Entity
         public bool HasToken(Dictionary<string, int> marking)
         {
             return marking[Name] > 0;
+        }
+
+        public bool HasToken(Dictionary<string, int> marking, int num)
+        {
+            return marking[Name] >= num;
         }
 
 
